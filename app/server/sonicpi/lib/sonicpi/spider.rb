@@ -32,6 +32,7 @@ require_relative "config/settings"
 require_relative "preparser"
 #require_relative "oscevent"
 #require_relative "stream"
+require_relative "verify"
 
 require 'net/http'
 require 'uri'
@@ -182,6 +183,40 @@ module SonicPi
         r = block.call
         t.thread_variable_set(:sonic_pi__not_inherited__spider_in_no_kill_block, false)
         r
+      end
+    end
+
+    def __vt_clear()
+      @msg_queue.push({:type => :vtclear})
+    end
+
+    def __vt_info(s)
+      __vt_clear()
+      s.each do |val|
+        @msg_queue.push({:type => :vt, :val => val})
+      end
+    end
+
+    def __session_info(arr)
+      if "NODATA".eql?(arr[2])
+        __info(arr[3])
+      elsif "DEADLOCK".eql?(arr[2])
+        __info("Local Types:")
+        arr[0].each do |type|
+          __info(type)
+        end
+        
+        __no_kill_block do
+          __info(arr[3])
+        end
+      elsif "n/A".eql?(arr[2])
+        __info("Local Types:")
+        arr[0].each do |type|
+          __info(type)
+        end
+
+        __info("Global Type:")
+        __info(arr[1])
       end
     end
 
@@ -601,6 +636,12 @@ module SonicPi
           @run_start_time = now if num_running_jobs == 1
           __info "Starting run #{id}"
           code = PreParser.preparse(code)
+
+          output = __verify_code(code, info)
+          __vt_clear()
+          __vt_info(output[0])
+          __session_info(output[1])
+
           eval(code, nil, info[:workspace] || 'eval', firstline)
           __schedule_delayed_blocks_and_messages!
         rescue Stop => e

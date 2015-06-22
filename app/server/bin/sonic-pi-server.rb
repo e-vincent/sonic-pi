@@ -423,6 +423,13 @@ out_t = Thread.new do
         when :info
           m = encoder.encode_single_message("/info", [message[:val]])
           gui.send_raw(m)
+        when :vt
+          p [message[:val].to_s]
+          m = encoder.encode_single_message("/vt", [message[:val].to_s])
+          gui.send_raw(m)
+        when :vtclear
+          m = encoder.encode_single_message("/vtclear", [])
+          gui.send_raw(m)
         when :error
           desc = message[:val] || ""
           trace = message[:backtrace].join("\n")

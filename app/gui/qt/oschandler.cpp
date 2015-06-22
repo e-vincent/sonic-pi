@@ -5,11 +5,12 @@
 
 #include <QTextEdit>
 
-OscHandler::OscHandler(MainWindow *parent, QTextEdit *outPane, QTextEdit *errorPane, SonicPiTheme *theme)
+OscHandler::OscHandler(MainWindow *parent, QTextEdit *outPane, QTextEdit *errorPane, QTextEdit *vtPane, SonicPiTheme *theme)
 {
     window = parent;
     out = outPane;
     error = errorPane;
+    vt = vtPane;
     signal_server_stop = false;
     server_started = false;
     this->theme = theme;
@@ -121,6 +122,21 @@ void OscHandler::oscMessage(std::vector<char> buffer){
           QMetaObject::invokeMethod( out, "setTextBackgroundColor", Qt::QueuedConnection, Q_ARG(QColor, theme->color("LogBackground")));
         } else {
           std::cout << "[GUI] - error: unhandled OSC msg /info "<< std::endl;
+        }
+      }
+      else if (msg->match("/vtclear")) {
+        QMetaObject::invokeMethod( vt, "clear",  Qt::QueuedConnection);        
+        QMetaObject::invokeMethod( vt, "append", Qt::QueuedConnection, Q_ARG(QString, QString::fromStdString("[Line, Time] \n")) );          
+
+      }
+      else if (msg->match("/vt")) {
+        std::string s;
+
+        if (msg->arg().popStr(s).isOkNoMoreArgs()) {
+          QMetaObject::invokeMethod( out, "setTextColor",           Qt::QueuedConnection, Q_ARG(QColor, QColor("#5e5e5e")));
+          QMetaObject::invokeMethod( out, "setTextBackgroundColor", Qt::QueuedConnection, Q_ARG(QColor, theme->color("LogBackground")));
+
+          QMetaObject::invokeMethod( vt, "append",                  Qt::QueuedConnection, Q_ARG(QString, QString::fromStdString(s + "\n")) );
         }
       }
       else if (msg->match("/error")) {

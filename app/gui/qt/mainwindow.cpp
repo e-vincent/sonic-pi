@@ -129,7 +129,8 @@ MainWindow::MainWindow(QApplication &app, bool i18n, QSplashScreen* splash)
 
   // Setup output and error panes
   outputPane = new QTextEdit;
-  errorPane = new QTextBrowser;
+  errorPane  = new QTextBrowser;
+  vt = new QTextEdit;
   errorPane->setOpenExternalLinks(true);
 
   // Syntax highlighting
@@ -153,7 +154,7 @@ MainWindow::MainWindow(QApplication &app, bool i18n, QSplashScreen* splash)
 
   server_thread = QtConcurrent::run(this, &MainWindow::startServer);
 
-  OscHandler* handler = new OscHandler(this, outputPane, errorPane, theme);
+  OscHandler* handler = new OscHandler(this, outputPane, errorPane, vt, theme);
 
   if(protocol == UDP){
     sonicPiServer = new SonicPiUDPServer(this, handler);
@@ -309,13 +310,7 @@ MainWindow::MainWindow(QApplication &app, bool i18n, QSplashScreen* splash)
   prefsWidget->hide();
   prefsWidget->setObjectName("prefs");
 
-  outputWidget = new QDockWidget(tr("Log"), this);
-  outputWidget->setFocusPolicy(Qt::NoFocus);
-  outputWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
-  outputWidget->setAllowedAreas(Qt::RightDockWidgetArea);
-  outputWidget->setWidget(outputPane);
-  addDockWidget(Qt::RightDockWidgetArea, outputWidget);
-  outputWidget->setObjectName("output");
+
 
   docsCentral = new QTabWidget;
   docsCentral->setFocusPolicy(Qt::NoFocus);
@@ -358,6 +353,34 @@ MainWindow::MainWindow(QApplication &app, bool i18n, QSplashScreen* splash)
   // window:
   // connect(docWidget, SIGNAL(visibilityChanged(bool)), this,
   // SLOT(helpClosed(bool)));
+
+  vt->setReadOnly(true);
+  vt->setLineWrapMode(QTextEdit::NoWrap);
+  vt->setTextColor(QColor(theme->color("LogDefaultForeground")));
+
+  vt->setMaximumWidth(100);
+  vt->setMinimumWidth(100);
+  outputPane->setMinimumWidth(400);
+
+  QHBoxLayout *outputLayout = new QHBoxLayout;
+  outputLayout->addWidget(vt);
+  outputLayout->addWidget(outputPane);
+  QWidget *outW = new QWidget();
+  outW->setLayout(outputLayout);
+
+  outputWidget = new QDockWidget(tr("Outputs"), this);
+  outputWidget->setFocusPolicy(Qt::NoFocus);
+  outputWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+  outputWidget->setAllowedAreas(Qt::RightDockWidgetArea);
+  outputWidget->setWidget(outW);
+  addDockWidget(Qt::RightDockWidgetArea, outputWidget);
+  outputWidget->setObjectName("output");
+
+  vt->append("Virtual Time");
+  vt->append("------------------\n");
+
+  vt->zoomIn(1);
+  vt->append("\n");
 
   mainWidgetLayout = new QVBoxLayout;
   mainWidgetLayout->addWidget(tabs);

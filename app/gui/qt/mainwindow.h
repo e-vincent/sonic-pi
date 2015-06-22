@@ -215,6 +215,7 @@ private:
     bool restoreDocPane;
 
     QTabWidget *tabs;
+    QTextEdit *vt;
 
     QProcess *serverProcess;
 
